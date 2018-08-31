@@ -1,3 +1,4 @@
+// Get OS version from .dll/.exe
 function Get-OSVersion {
 	$basic_version = [System.Environment]::OSVersion.Version
 	$basic_version_string = '{0}.{1}.{2}' -f $basic_version.Major, $basic_version.Minor, $basic_version.Build
@@ -32,3 +33,11 @@ function Get-OSVersion {
 }
 
 Get-OSVersion
+
+// Get System info, but no revision
+systeminfo /fo csv | ConvertFrom-Csv | Format-List
+
+// Powershell cmdlet
+
+ Get-ComputerInfo | select WindowsProductName, WindowsVersion, OsHardwareAbstractionLayer
+
