@@ -1,0 +1,34 @@
+function Get-OSVersion {
+	$basic_version = [System.Environment]::OSVersion.Version
+	$basic_version_string = '{0}.{1}.{2}' -f $basic_version.Major, $basic_version.Minor, $basic_version.Build
+
+	# only take the 10 most recently modified .dll/.exe files to speed this up
+	$system32 = (ls "$env:SystemRoot\System32" | ? { $_.Name -match ".*win.*(\.dll|\.exe)$" } | sort LastWriteTime -Descending)[0..9] 
+	
+	$versions = $system32 | % { 
+		$obj = New-Object PSObject
+		$obj | Add-Member NoteProperty Version((Get-ItemProperty -Path $_.Fullname).VersionInfo.FileVersion)
+		return $obj 
+	}
+	
+	$versions = $versions | ? { $_.Version -match $basic_version_string }                                          
+	
+	$regex = '\((\w+)\.(\d+-\d+)\)'
+	$versions = $versions | % { 
+		$spl = $_.Version -split " "
+		if ($spl[1] -match $regex) {
+			$_.Version = $spl[0]
+			$_ | Add-Member NoteProperty BuildDate($matches[2])
+			return $_ 
+		}
+	} | sort -Property BuildDate -Descending
+	
+	if ($versions.Length) {
+		return $versions[0].Version
+
+	} else {
+		return $basic_version_string
+	}
+}
+
+Get-OSVersion
